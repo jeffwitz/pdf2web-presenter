@@ -48,6 +48,31 @@ Before installing and using this tool, make sure your system includes:
    * **Linux (Fedora):** `sudo dnf install pdf2svg`
    * **macOS (Homebrew):** `brew install pdf2svg`
 
+## Quick Start with Example
+
+An example presentation is included in the `example` directory. To try it out:
+
+```bash
+# Clone the repository
+git clone https://github.com/jeffwitz/pdf2web-presenter.git
+cd pdf2web-presenter
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Convert the example presentation
+python main.py example/presentation.pdf
+
+# Open the generated presentation in your browser
+firefox presentation/presentation_swiper.html  # or use your preferred browser
+```
+
+This will demonstrate the key features including:
+- Smooth slide transitions
+- Laser pointer in fullscreen mode
+- Video playback
+- Thumbnail navigation (press 'M')
+
 ## Installation
 
 1. **Clone the Repository:**

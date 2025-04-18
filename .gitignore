@@ -1,5 +1,6 @@
-# Ignore PDF files
+# Ignore PDF files except example
 *.pdf
+!example/*.pdf
 
 # Ignore generated presentation folders
 presentation/
