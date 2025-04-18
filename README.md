@@ -91,18 +91,22 @@ python main.py [options] [path_to_pdf]
 An example presentation is included in the `example` directory. To try it out:
 
 ### Convert the example presentation
+```bash
 python main.py example/presentation.pdf
+```
 
 ### Open the generated presentation in your browser
+```bash
 firefox presentation/presentation_swiper.html  # or use your preferred browser
 ```
 
 This will demonstrate the key features including:
+- Arrow keys for change of slides
 - Smooth slide transitions
 - Laser pointer in fullscreen mode
 - Video playback
 - Thumbnail navigation (press 'M')
-Specify output folder:
+- Specify output folder:
 ```bash
 python main.py slides/my_presentation.pdf -o output/web_slides
 ```
