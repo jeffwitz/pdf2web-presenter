@@ -1,0 +1,22 @@
+# Ignore PDF files
+*.pdf
+
+# Ignore generated presentation folders
+presentation/
+
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
