@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+{# Sets the document language to English #}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {# The title is passed from the Python generator #}
+  <title>{{ html_title }}</title>
+
+  {# Link to the Swiper CSS file using the path from the configuration #}
+  <link rel="stylesheet" href="{{ swiper_css_path }}" />
+
+  <style>
+    /* --- Base Page Styles --- */
+    html, body {
+      position: relative;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    /* --- Swiper Container Wrapper --- */
+    .swiper-container-wrapper {
+      width: 100%;
+      max-width: 95vw;
+      aspect-ratio: {{ ref_aspect_ratio | round(6) }};
+      max-height: 95vh;
+      position: relative;
+      overflow: hidden;
+      background-color: #000;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* --- Swiper Instance --- */
+    .swiper {
+      width: 100%;
+      height: 100%;
+      /* Default cursor for non-fullscreen */
+      cursor: auto;
+    }
+
+    /* Hide system cursor in fullscreen */
+    :fullscreen .swiper {
+      cursor: none !important;
+    }
+    :-webkit-full-screen .swiper {
+      cursor: none !important;
+    }
+    :-moz-full-screen .swiper {
+      cursor: none !important;
+    }
+    :-ms-fullscreen .swiper {
+      cursor: none !important;
+    }
+
+    /* Styles pour les vidéos */
+    .slide-video-overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: black;
+    }
+
+    /* --- Swiper Slide (Base) --- */
+    .swiper-slide {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      box-sizing: border-box; /* Important for border calculation */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #ccc;
+      color: #333;
+      text-align: center;
+    }
+
+    /* --- HACK: Force slide visibility + transparent border --- */
+    /* This combination is necessary for rendering in this environment */
+    .swiper-slide {
+        opacity: 1 !important;
+        visibility: visible !important;
+        border: 1px solid transparent !important; /* <<< HACK CONSERVÉ */
+        z-index: 100 !important; /* Keep high for visibility */
+    }
+    /* --- END HACK --- */
+
+    /* --- Slide Background (SVG) --- */
+    .slide-background-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 1; /* Behind slide content */
+    }
+
+    /* --- Video Overlay --- */
+    .slide-video-overlay {
+      position: absolute;
+      z-index: 10; /* Above background */
+      object-fit: cover;
+    }
+
+    /* --- Fullscreen Button --- */
+    #fullscreen-button {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 150; /* Above debugged slides */
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+      line-height: 0;
+    }
+    #fullscreen-button:hover {
+      opacity: 1;
+    }
+    #fullscreen-button svg {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+    }
+
+    /* --- Fullscreen Mode Styles (Container Only) --- */
+    .swiper-container-wrapper:-webkit-full-screen,
+    .swiper-container-wrapper:-moz-full-screen,
+    .swiper-container-wrapper:-ms-fullscreen,
+    .swiper-container-wrapper:fullscreen {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      /* aspect-ratio: unset; */ /* Optional */
+    }
+
+    /* --- Hide System Cursor in Fullscreen --- */
+    /* Apply to container and ALL its children */
+    .swiper-container-wrapper:-webkit-full-screen,
+    .swiper-container-wrapper:-moz-full-screen,
+    .swiper-container-wrapper:-ms-fullscreen,
+    .swiper-container-wrapper:fullscreen,
+    .swiper-container-wrapper:-webkit-full-screen *,
+    .swiper-container-wrapper:-moz-full-screen *,
+    .swiper-container-wrapper:-ms-fullscreen *,
+    .swiper-container-wrapper:fullscreen * {
+        cursor: none !important; /* Force hide system cursor */
+    }
+    /* --- END Hide System Cursor --- */
+
+    /* Hide the custom fullscreen button when native fullscreen is active */
+    .swiper-container-wrapper:fullscreen #fullscreen-button {
+        display: none;
+    }
+
+    /* --- Laser Pointer DIV Style --- */
+    /* Animation du pointeur laser */
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    }
+
+    /* Pulsing animation for the laser pointer */
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    /* --- END Laser Pointer Style --- */
+
+    /* --- Error Message Styling --- */
+    .error-message {
+      color: red;
+      z-index: 2; /* Relative to slide */
+      position: relative;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 0.9em;
+      max-width: 80%;
+      display: inline-block;
+    }
+
+    /* --- Thumbnail Menu Styles --- */
+    .thumbnail-menu {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.85); z-index: 10000; /* Ensure menu is above pointer if needed, but below browser UI */
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+      padding: 20px; box-sizing: border-box;
+    }
+    .thumbnail-menu.visible { opacity: 1; visibility: visible; }
+    .thumbnail-grid-container {
+      position: relative; background-color: #ffffff; padding: 40px 25px 25px 25px;
+      border-radius: 8px; width: 100%; height: 100%; max-width: 1200px; max-height: 90vh;
+      overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box;
+    }
+    #close-thumbnail-menu {
+      position: absolute; top: 8px; right: 12px; background: none; border: none;
+      font-size: 2.5rem; line-height: 1; padding: 0; color: #888;
+      cursor: pointer; font-weight: 300; z-index: 10;
+    }
+    #close-thumbnail-menu:hover { color: #333; }
+    .thumbnail-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 15px; width: 100%; overflow-y: auto; padding-right: 5px; flex-grow: 1;
+    }
+    .thumbnail-item {
+      border: 1px solid #ddd; padding: 5px; cursor: pointer;
+      aspect-ratio: {{ ref_aspect_ratio | round(6) }}; background-color: #f0f0f0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+    .thumbnail-item:hover { transform: scale(1.05); border-color: #007aff; box-shadow: 0 0 8px rgba(0, 122, 255, 0.5); z-index: 5; }
+    .thumbnail-item img { display: block; max-width: 100%; max-height: calc(100% - 20px); object-fit: contain; }
+    .thumbnail-item .slide-number {
+      position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+      font-size: 0.8em; background: rgba(0, 0, 0, 0.6); color: white;
+      padding: 1px 5px; border-radius: 3px; line-height: 1.2; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  {# Main wrapper controlling presentation size and centering #}
+  <div class="swiper-container-wrapper" id="presentation-container">
+
+    {# Swiper Initialization Target #}
+    <div class="swiper">
+      <div class="swiper-wrapper">
+
+        {# Loop through each slide object prepared by the Python script #}
+        {% for slide in slides %}
+        {# --- Slide Start --- #}
+        <div class="swiper-slide"
+             data-slide-index="{{ slide.pageIndex }}"
+             data-pdf-page-width="{{ slide.dimensions.width_pt | round(5) if slide.dimensions and slide.dimensions.width_pt is defined else fallback_slide_width | round(5) }}"
+             data-pdf-page-height="{{ slide.dimensions.height_pt | round(5) if slide.dimensions and slide.dimensions.height_pt is defined else fallback_slide_height | round(5) }}">
+
+          {# Display SVG background if it exists #}
+          {% if slide.svg_exists %}
+            <img class="slide-background-svg"
+                 src="{{ slide.svg_path | e }}"
+                 alt="Slide background {{ loop.index }}"
+                 loading="lazy">
+          {% else %}
+            <p class="error-message">
+              SVG background missing<br>({{ slide.svg_path | e }})
+            </p>
+          {% endif %}
+
+          {# Loop through videos associated with this slide #}
+          {% for video in slide.videos %}
+            {% if video.videoPath and video.pdfRect %}
+              <video class="slide-video-overlay"
+                     id="video_{{ slide.pageIndex }}_{{ loop.index0 }}"
+                     controls muted loop preload="metadata"
+                     data-autoplay
+                     data-pdf-rect-llx="{{ video.pdfRect.llx | round(5) }}"
+                     data-pdf-rect-lly="{{ video.pdfRect.lly | round(5) }}"
+                     data-pdf-rect-urx="{{ video.pdfRect.urx | round(5) }}"
+                     data-pdf-rect-ury="{{ video.pdfRect.ury | round(5) }}">
+                <source src="{{ video.videoPath | e }}" type="{{ video.videoMime | e }}">
+                Your browser does not support the HTML5 video tag ({{ video.videoMime | e }}).
+              </video>
+            {% else %}
+              <p class="error-message">
+                Invalid video data on slide {{ slide.pageIndex + 1 }}
+              </p>
+            {% endif %}
+          {% endfor %}{# End video loop #}
+
+        </div> {# --- Slide End --- #}
+        {% endfor %}{# End slide loop #}
+
+      </div> {# End swiper-wrapper #}
+    </div> {# End swiper #}
+
+    {# --- Fullscreen Button --- #}
+    <button id="fullscreen-button" title="Fullscreen (F)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+      </svg>
+    </button>
+
+  </div> {# End swiper-container-wrapper #}
+
+  {# --- Thumbnail Menu Overlay --- #}
+  <div id="thumbnail-menu-overlay" class="thumbnail-menu">
+    <div class="thumbnail-grid-container">
+        <button id="close-thumbnail-menu" title="Close (Esc)" aria-label="Close thumbnail menu">×</button>
+        <div class="thumbnail-grid">
+            <p>Loading thumbnails...</p>
+        </div>
+    </div>
+  </div>
+  {# --- End Thumbnail Menu Overlay --- #}
+
+  {# --- Scripts --- #}
+  <script src="{{ swiper_js_path }}"></script>
+  <script src="{{ presentation_js_path }}"></script>
+
+</body>
+</html>
