@@ -1,0 +1,3 @@
+pikepdf
+python-magic
+Jinja2
