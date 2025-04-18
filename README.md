@@ -48,31 +48,6 @@ Before installing and using this tool, make sure your system includes:
    * **Linux (Fedora):** `sudo dnf install pdf2svg`
    * **macOS (Homebrew):** `brew install pdf2svg`
 
-## Quick Start with Example
-
-An example presentation is included in the `example` directory. To try it out:
-
-```bash
-# Clone the repository
-git clone https://github.com/jeffwitz/pdf2web-presenter.git
-cd pdf2web-presenter
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Convert the example presentation
-python main.py example/presentation.pdf
-
-# Open the generated presentation in your browser
-firefox presentation/presentation_swiper.html  # or use your preferred browser
-```
-
-This will demonstrate the key features including:
-- Smooth slide transitions
-- Laser pointer in fullscreen mode
-- Video playback
-- Thumbnail navigation (press 'M')
-
 ## Installation
 
 1. **Clone the Repository:**
@@ -111,14 +86,22 @@ python main.py [options] [path_to_pdf]
 - `--codec {h264,vp9,av1}`: Target video codec for transcoding (if needed). Also determines output container (.mp4 for h264, .webm for vp9/av1). Default: `config.DEFAULT_VIDEO_CODEC` (usually h264).
 - `--vaapi`: Attempts to use VAAPI hardware acceleration (Linux only) for video encoding. Requires compatible hardware, up-to-date drivers, and FFmpeg with VAAPI support. Automatically falls back to CPU encoding if VAAPI fails.
 
-**Examples:**
+## Quick Start with Example
 
-Simple conversion (PDF in current folder):
-```bash
-python main.py presentation.pdf
-# Output in folder "presentation/"
+An example presentation is included in the `example` directory. To try it out:
+
+# Convert the example presentation
+python main.py example/presentation.pdf
+
+# Open the generated presentation in your browser
+firefox presentation/presentation_swiper.html  # or use your preferred browser
 ```
 
+This will demonstrate the key features including:
+- Smooth slide transitions
+- Laser pointer in fullscreen mode
+- Video playback
+- Thumbnail navigation (press 'M')
 Specify output folder:
 ```bash
 python main.py slides/my_presentation.pdf -o output/web_slides
