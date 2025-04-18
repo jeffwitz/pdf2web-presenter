@@ -90,10 +90,10 @@ python main.py [options] [path_to_pdf]
 
 An example presentation is included in the `example` directory. To try it out:
 
-# Convert the example presentation
+### Convert the example presentation
 python main.py example/presentation.pdf
 
-# Open the generated presentation in your browser
+### Open the generated presentation in your browser
 firefox presentation/presentation_swiper.html  # or use your preferred browser
 ```
 
