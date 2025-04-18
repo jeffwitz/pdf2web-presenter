@@ -6,8 +6,6 @@
 Convert your PDF presentations (exported from LibreOffice Impress, PowerPoint, etc.) into modern, interactive web slideshows based on [Swiper.js](https://swiperjs.com/). This tool extracts embedded videos, converts pages to SVG for high-quality vector rendering, and generates a standalone web application (HTML, CSS, JS).
 
 ![Demo Placeholder](placeholder.gif)
-*(Add a screenshot or demo GIF of the final result here)*
-
 ## Key Features
 
 * **PDF to HTML Conversion:** Transforms a static PDF into a dynamic web presentation.
