@@ -180,5 +180,3 @@ output_folder/
 ```
 
 ---
-
-Souhaites-tu aussi que je traduise la partie "Fonctionnement Interne (Aperçu Technique)" ?
