@@ -24,6 +24,7 @@ Convert your PDF presentations (exported from LibreOffice Impress, PowerPoint, e
   * **CPU Fallback:** If VAAPI encoding fails (incompatible hardware, driver error), the tool automatically falls back to CPU encoding.
 * **Thumbnail Navigation:** A thumbnail menu (accessible with the 'M' key) allows quick slide navigation.
 * **Fullscreen Mode:** A button and the 'F' key enable native browser fullscreen mode.
+* **Laser Pointer (Fullscreen):** A red laser pointer is available in fullscreen mode. Its visibility is ensured on all backgrounds using CSS `mix-blend-mode: difference`, so it always stands out whether slides are light or dark. The pointer is small and discreet, optimized for presentations.
 * **Standalone:** Copies necessary libraries (Swiper.js) into the output folder for easy deployment.
 * **Configurable:** Many options (codecs, quality, paths) can be adjusted in `config.py`.
 
