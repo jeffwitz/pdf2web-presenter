@@ -77,21 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
             position: fixed !important;
             top: 0;
             left: 0;
-            width: 12px;
-            height: 12px;
+            width: 6px;
+            height: 6px;
             background-color: #ff0000;
             border-radius: 50%;
-            border: 2px solid #000000;
+            border: 1px solid rgba(233, 147, 199, 0.5);
             box-shadow: 
                 0 0 1px 1px #000000,
-                0 0 2px 2px rgba(0, 0, 0, 0.8),
-                0 0 4px 2px #ff0000,
-                0 0 8px 4px rgba(255, 0, 0, 0.8);
+                0 0 2px 2px rgba(200, 89, 89, 0.2),
+                0 0 4px 2px rgba(200, 89, 89, 0.2),
+                0 0 8px 4px rgba(255, 0, 0, 0.3);
             pointer-events: none !important;
             transform: translate(-50%, -50%);
             z-index: 2147483647 !important;
             display: block;
-            mix-blend-mode: screen;
+            mix-blend-mode: difference;
             visibility: visible !important;
             opacity: 1 !important;
         `;
