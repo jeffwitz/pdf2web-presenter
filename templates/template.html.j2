@@ -64,13 +64,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
+      pointer-events: none !important; /* Prevent flicker: doubly enforced */
       opacity: 0;
       transition: opacity 0.22s cubic-bezier(.4,0,.2,1);
     }
     .mini-thumb-popover.visible {
       opacity: 1;
-      pointer-events: auto;
+      /* pointer-events: auto; */ /* Removed to prevent flicker */
     }
     .mini-thumb-popover img {
       display: block;
@@ -430,8 +430,8 @@
         <div class="thumbnail-grid">
             <p>Loading thumbnails...</p>
         </div>
-        <!-- Liste responsive des numéros de slides (affichée sur petit écran) -->
-        <div class="thumbnail-number-list"></div> <!-- JS remplit -->
+        <!-- Responsive list of slide numbers (displayed on small screens) -->
+        <div class="thumbnail-number-list"></div> <!-- JS populates -->
     </div>
   </div>
   {# --- End thumbnail menu overlay --- #}

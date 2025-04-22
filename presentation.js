@@ -18,6 +18,106 @@ function generateMinimalNumberList() {
     if (!numberList || !swiperElement) return;
     numberList.innerHTML = '';
     const slides = swiperElement.querySelectorAll('.swiper-slide');
+    
+    // --- Créer un popover UNIQUE qui sera réutilisé ---
+    // Créer le conteneur une seule fois, directement dans le body
+    const popover = document.createElement('div');
+    popover.className = 'one-popover'; // Classe spéciale, pas mini-thumb-popover
+    popover.style.position = 'fixed';
+    popover.style.zIndex = '10000';
+    popover.style.background = '#fff';
+    popover.style.border = '1.5px solid #888';
+    popover.style.borderRadius = '12px';
+    popover.style.boxShadow = '0 8px 32px rgba(0,0,0,0.28)';
+    popover.style.padding = '8px';
+    popover.style.display = 'flex';
+    popover.style.alignItems = 'center';
+    popover.style.justifyContent = 'center';
+    popover.style.minWidth = '120px';
+    popover.style.maxWidth = '260px';
+    popover.style.maxHeight = '180px';
+    popover.style.pointerEvents = 'none'; // Crucial pour éviter le flicker
+    popover.style.opacity = '0';  // Caché par défaut
+    popover.style.transition = 'opacity 0.22s';
+    // Cacher hors écran au début
+    popover.style.left = '-9999px';
+    popover.style.top = '-9999px';
+    document.body.appendChild(popover);
+
+    let popoverTimeout = null;
+    let currentTarget = null;
+    
+    // Masquer le popover
+    function hidePopover() {
+        if (popoverTimeout) {
+            clearTimeout(popoverTimeout);
+            popoverTimeout = null;
+        }
+        // Ne pas supprimer l'élément, juste le déplacer hors écran
+        popover.style.opacity = '0';
+        // Après la transition, le déplacer hors écran
+        setTimeout(() => {
+            if (popover) {
+                popover.style.left = '-9999px';
+                popover.style.top = '-9999px';
+            }
+        }, 220);
+        currentTarget = null;
+    }
+    
+    // Afficher le popover pour un numéro
+    function showPopover(numItem, slideIdx) {
+        // Si déjà affiché pour ce numéro, ne rien faire
+        if (currentTarget === numItem) return;
+        // Annuler tout timeout précédent
+        if (popoverTimeout) {
+            clearTimeout(popoverTimeout);
+            popoverTimeout = null;
+        }
+        
+        // Mettre à jour le contenu
+        popover.innerHTML = '';
+        
+        // Trouver l'URL de l'image SVG pour cette diapo
+        let svgUrl = null;
+        const slidesArr = Array.from(slides);
+        const slide = slidesArr.find(s => parseInt(s.dataset.slideIndex ?? -1, 10) === slideIdx);
+        if (slide) {
+            const svgImg = slide.querySelector('img.slide-background-svg');
+            svgUrl = svgImg?.src;
+        }
+        
+        // Ajouter l'image ou le texte
+        if (svgUrl) {
+            const img = document.createElement('img');
+            img.src = svgUrl;
+            img.alt = `Preview Slide ${slideIdx + 1}`;
+            img.style.display = 'block';
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '164px';
+            img.style.borderRadius = '8px';
+            img.style.background = '#fff';
+            img.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+            popover.appendChild(img);
+        } else {
+            popover.textContent = `Slide ${slideIdx + 1}`;
+        }
+        
+        // Positionner au-dessus du numéro
+        const rect = numItem.getBoundingClientRect();
+        popover.style.left = (rect.left + rect.width/2) + 'px';
+        popover.style.top = (rect.top - 10) + 'px';
+        popover.style.transform = 'translate(-50%, -100%)';
+        
+        // Afficher avec transition
+        // Petit délai pour s'assurer que la position a été appliquée
+        setTimeout(() => {
+            popover.style.opacity = '1';
+        }, 5);
+        
+        currentTarget = numItem;
+    }
+
     slides.forEach((slide, idx) => {
         const slideIdx = parseInt(slide.dataset.slideIndex ?? idx, 10);
         const numItem = document.createElement('div');
@@ -49,6 +149,23 @@ function generateMinimalNumberList() {
             }
             if (thumbnailMenuOverlay) thumbnailMenuOverlay.classList.remove('visible');
         }
+        // Mouse events (anti-flicker - solution finale):
+        numItem.addEventListener('mouseenter', () => {
+            if (popoverTimeout) clearTimeout(popoverTimeout);
+            // Delay showing popover by 500ms to avoid showing on quick movements
+            popoverTimeout = setTimeout(() => showPopover(numItem, slideIdx), 500);
+        });
+        
+        numItem.addEventListener('mouseleave', () => {
+            hidePopover();
+        });
+        // Keyboard focus
+        numItem.addEventListener('focus', () => {
+            if (popoverTimeout) clearTimeout(popoverTimeout);
+            popoverTimeout = setTimeout(() => showPopover(numItem, slideIdx), 500);
+        });
+        numItem.addEventListener('blur', hidePopover);
+        // Touch: show on long press (optional, not implemented here)
         numItem.addEventListener('click', goToSlideFromMinimalMenu);
         numItem.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
