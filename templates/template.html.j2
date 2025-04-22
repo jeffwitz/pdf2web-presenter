@@ -20,7 +20,7 @@
       .thumbnail-grid { display: none !important; }
       .thumbnail-number-list { display: flex !important; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 16px 0 0 0; }
     }
-    @media (min-width: 701px) {
+    @media (min-width: 701px) and (min-height: 501px) {
       .thumbnail-number-list { display: none !important; }
     }
     .thumbnail-number-list {
@@ -45,7 +45,7 @@
       cursor: pointer;
       transition: background 0.2s, border 0.2s;
       position: relative;
-      overflow: visible; /* Pour permettre le popover */
+      overflow: visible; /* Allow popover */
     }
     .mini-thumb-popover {
       position: absolute;
@@ -92,7 +92,7 @@
       border-radius: 8px;
       background: #fff;
     }
-    /* Pour éviter le shift lors du remplacement numéro <-> image */
+    /* Prevent shifting when replacing number <-> image */
     .thumbnail-number-item span { display: block; width: 100%; text-align: center; }
     .thumbnail-number-item .slide-number-mini { font-size: 1em; color: #222; }
     .thumbnail-number-item .slide-number-mini:hover { color: #007aff; }
@@ -471,102 +471,6 @@
     // Appel initial au cas où déjà en fs
     moveOverlayToFullscreen();
   })();
-  // --- Dynamically generate slide number list for mobile ---
-  function generateNumberList() {
-    const swiperEl = document.querySelector('.swiper');
-    const numberList = document.querySelector('.thumbnail-number-list');
-    if (!swiperEl || !numberList) return;
-    numberList.innerHTML = '';
-    const slides = swiperEl.querySelectorAll('.swiper-slide');
-    slides.forEach((slide, idx) => {
-      const slideIdx = parseInt(slide.dataset.slideIndex ?? idx, 10);
-      const numItem = document.createElement('div');
-      numItem.className = 'thumbnail-number-item';
-      numItem.tabIndex = 0;
-      const span = document.createElement('span');
-      span.textContent = (slideIdx + 1).toString();
-      span.className = 'slide-number-mini';
-      numItem.appendChild(span);
-      let img = null;
-      let svgUrl = null;
-      const svgImg = slide.querySelector('img.slide-background-svg');
-      if (svgImg) svgUrl = svgImg.src;
-      let popoverTimeout = null;
-      let popover = null;
-      function showPopover() {
-        if (svgUrl) {
-          if (!popover) {
-            popover = document.createElement('div');
-            popover.className = 'mini-thumb-popover';
-            const imgEl = document.createElement('img');
-            imgEl.src = svgUrl;
-            imgEl.alt = `Miniature slide ${slideIdx + 1}`;
-            popover.appendChild(imgEl);
-            numItem.appendChild(popover);
-          }
-          setTimeout(() => popover.classList.add('visible'), 10);
-        }
-      }
-      function hidePopover() {
-        if (popover) {
-          popover.classList.remove('visible');
-          setTimeout(() => {
-            if (popover && popover.parentNode) popover.parentNode.removeChild(popover);
-            popover = null;
-          }, 180);
-        }
-      }
-      numItem.addEventListener('mouseenter', () => {
-        popoverTimeout = setTimeout(showPopover, 500);
-      });
-      numItem.addEventListener('mouseleave', () => {
-        clearTimeout(popoverTimeout);
-        hidePopover();
-      });
-      numItem.addEventListener('focus', () => {
-        popoverTimeout = setTimeout(showPopover, 500);
-      });
-      numItem.addEventListener('blur', () => {
-        clearTimeout(popoverTimeout);
-        hidePopover();
-      });
-      function handleGoToSlide(e) {
-        e.stopPropagation();
-        let swiper = null;
-        if (window.swiperInstance && typeof window.swiperInstance.slideTo === 'function') {
-          swiper = window.swiperInstance;
-        } else if (window.Swiper && window.Swiper.instances && window.Swiper.instances.length > 0) {
-          swiper = window.Swiper.instances[0];
-        } else {
-          const swiperEl = document.querySelector('.swiper') || document.querySelector('.swiper-container');
-          if (swiperEl && swiperEl.swiper) swiper = swiperEl.swiper;
-        }
-        if (swiper && typeof swiper.slideTo === 'function') {
-          swiper.slideTo(slideIdx);
-        }
-        const overlay = document.getElementById('thumbnail-menu-overlay');
-        if (overlay) overlay.classList.remove('visible');
-      }
-      numItem.addEventListener('click', handleGoToSlide);
-      numItem.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleGoToSlide(e);
-        }
-      });
-      numberList.appendChild(numItem);
-    });
-  }
-  document.addEventListener('DOMContentLoaded', generateNumberList);
-  window.addEventListener('resize', generateNumberList);
-  // Also regenerate when menu is shown (in case of dynamic open)
-  const overlay = document.getElementById('thumbnail-menu-overlay');
-  if (overlay) {
-    overlay.addEventListener('transitionend', function(e) {
-      if (overlay.classList.contains('visible')) generateNumberList();
-    });
-  }
-
   </script>
 
 </body>

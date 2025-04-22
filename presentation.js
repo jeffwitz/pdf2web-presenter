@@ -1,4 +1,4 @@
-// presentation.js - VERSION AVEC LOGIQUE POINTEUR LASER CORRECTE
+// presentation.js - VERSION WITH CORRECT LASER POINTER LOGIC
 
 document.addEventListener('DOMContentLoaded', () => {
     "use strict";
@@ -6,14 +6,94 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded. Initializing presentation script...");
 
     // --- Global Variables & DOM References --- //
+
+/**
+ * Generates the responsive list of slide numbers for mobile/small height.
+ * Displays only numbers, no popover or image.
+ */
+function generateMinimalNumberList() {
+    const numberList = document.querySelector('.thumbnail-number-list');
+    const swiperElement = document.querySelector('.swiper');
+    const thumbnailMenuOverlay = document.getElementById('thumbnail-menu-overlay');
+    if (!numberList || !swiperElement) return;
+    numberList.innerHTML = '';
+    const slides = swiperElement.querySelectorAll('.swiper-slide');
+    slides.forEach((slide, idx) => {
+        const slideIdx = parseInt(slide.dataset.slideIndex ?? idx, 10);
+        const numItem = document.createElement('div');
+        numItem.className = 'thumbnail-number-item';
+        numItem.tabIndex = 0;
+        const span = document.createElement('span');
+        span.textContent = (slideIdx + 1).toString();
+        span.className = 'slide-number-mini';
+        numItem.appendChild(span);
+        // Go to the slide on click or keyboard
+        function goToSlideFromMinimalMenu() {
+            let swiper = null;
+            if (typeof swiperInstance !== 'undefined' && swiperInstance && typeof swiperInstance.slideTo === 'function') {
+                swiper = swiperInstance;
+            } else if (window.swiperInstance && typeof window.swiperInstance.slideTo === 'function') {
+                swiper = window.swiperInstance;
+            } else {
+                // fallback: try to access the instance via .swiper.swiper
+                const swiperEl = document.querySelector('.swiper');
+                if (swiperEl && swiperEl.swiper && typeof swiperEl.swiper.slideTo === 'function') {
+                    swiper = swiperEl.swiper;
+                }
+            }
+            if (swiper) {
+                console.log(`[MinimalNumberList] goToSlide: ${slideIdx}`);
+                swiper.slideTo(slideIdx);
+            } else {
+                console.warn('[MinimalNumberList] Could not find a valid Swiper instance for navigation');
+            }
+            if (thumbnailMenuOverlay) thumbnailMenuOverlay.classList.remove('visible');
+        }
+        numItem.addEventListener('click', goToSlideFromMinimalMenu);
+        numItem.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                goToSlideFromMinimalMenu();
+            }
+        });
+        numberList.appendChild(numItem);
+    });
+}
+// Generate responsive list on load
+console.log('[MinimalNumberList] Registering DOMContentLoaded handler');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[MinimalNumberList] DOMContentLoaded');
+    generateMinimalNumberList();
+});
+
+// Debounce on resize
+let minimalNumberListResizeTimeout = null;
+window.addEventListener('resize', () => {
+    if (minimalNumberListResizeTimeout) clearTimeout(minimalNumberListResizeTimeout);
+    minimalNumberListResizeTimeout = setTimeout(() => {
+        console.log('[MinimalNumberList] Window resized, regenerating list');
+        generateMinimalNumberList();
+    }, 120);
+});
+
+// transitionend only on opacity AND if visible
+const overlayElem = document.getElementById('thumbnail-menu-overlay');
+if (overlayElem) {
+    overlayElem.addEventListener('transitionend', function(e) {
+        if (e.propertyName === 'opacity' && this.classList.contains('visible')) {
+            console.log('[MinimalNumberList] transitionend (opacity, visible), regenerating list');
+            generateMinimalNumberList();
+        }
+    });
+}
     const presentationContainer = document.getElementById("presentation-container");
     const fullscreenButton = document.getElementById("fullscreen-button");
     const thumbnailMenuOverlay = document.getElementById("thumbnail-menu-overlay");
     const thumbnailGrid = document.querySelector(".thumbnail-grid");
     const closeThumbnailButton = document.getElementById("close-thumbnail-menu");
     const swiperElement = document.querySelector(".swiper");
-    // Le pointeur laser sera créé dynamiquement
-    // --------------------------------------
+    // The laser pointer will be created dynamically
+    // -------------------------------------------
 
     let swiperInstance = null;
     let laserPointer = null;
@@ -64,12 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function handleSlideChange(swiper) { if (!swiper || swiper.destroyed || !swiper.slides || swiper.slides.length === 0) { console.warn("handleSlideChange: Swiper invalid/destroyed/empty."); return; } const activeSlide = swiper.slides[swiper.activeIndex]; const activeIndex = swiper.activeIndex; if (activeSlide) { requestAnimationFrame(() => updateVideoPositions(activeSlide)); } else { console.warn(`handleSlideChange: Active slide (index ${activeIndex}) not found.`); } swiper.slides.forEach((slide, index) => { const videos = slide.querySelectorAll("video.slide-video-overlay"); videos.forEach(videoElement => { if (index === activeIndex) { if (videoElement.hasAttribute("data-autoplay")) { const playPromise = videoElement.play(); if (playPromise !== undefined) { playPromise.catch(error => { if (error.name !== 'NotAllowedError') { console.warn(`Play failed ${videoElement.id}:`, error.message); } }); } } } else { if (!videoElement.paused) { videoElement.pause(); } if (videoElement.currentTime !== 0) { videoElement.currentTime = 0; } } }); }); }
     function toggleFullScreen() { const presentationContainer = document.getElementById("presentation-container"); const notInFullscreen = (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement); if (notInFullscreen) { const element = presentationContainer; if (!element) return; if (element.requestFullscreen) { element.requestFullscreen().catch(err => console.error(`FS Error: ${err.message}`)); } else if (element.mozRequestFullScreen) { element.mozRequestFullScreen(); } else if (element.webkitRequestFullscreen) { element.webkitRequestFullscreen(); } else if (element.msRequestFullscreen) { element.msRequestFullscreen(); } } else { if (document.exitFullscreen) { document.exitFullscreen().catch(err => console.error(`Exit FS Error: ${err.message}`)); } else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); } else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); } else if (document.msExitFullscreen) { document.msExitFullscreen(); } } }
-    function hideThumbnailMenu() { const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { overlay.classList.remove('visible'); console.log("Thumbs hidden."); } }
-    function showThumbnailMenu() { if (swiperInstance && !swiperInstance.destroyed) { generateThumbnails(swiperInstance); } else { console.error("Cannot show thumbnails, swiper invalid."); if(thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; } const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { overlay.classList.add('visible'); console.log("Thumbs shown."); } }
-    function toggleThumbnailMenu() { const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { const isGoingToBeVisible = !overlay.classList.contains('visible'); if (isGoingToBeVisible) { if (swiperInstance && !swiperInstance.destroyed) { generateThumbnails(swiperInstance); } else { console.error("Cannot show/gen thumbs, swiper invalid."); if(thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; } } overlay.classList.toggle('visible'); console.log(`Thumbs ${overlay.classList.contains('visible')?'shown':'hidden'}.`); } }
-    function generateThumbnails(swiper) { if (!swiper || swiper.destroyed || !swiper.slides || !thumbnailGrid) { console.error("Cannot generate thumbnails: Swiper invalid or grid missing."); if (thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; return; } console.log("Generating thumbnails..."); thumbnailGrid.innerHTML = ''; swiper.slides.forEach((slide, index) => { const slideIndex = parseInt(slide.dataset.slideIndex ?? index, 10); const svgImgElement = slide.querySelector('img.slide-background-svg'); const svgUrl = svgImgElement?.src; const thumbItem = document.createElement('div'); thumbItem.classList.add('thumbnail-item'); thumbItem.dataset.gotoSlide = slideIndex; if (svgUrl) { const img = document.createElement('img'); img.src = svgUrl; img.alt = `Thumb ${slideIndex + 1}`; img.loading = 'lazy'; thumbItem.appendChild(img); } else { const fallback = document.createElement('span'); fallback.textContent = `Slide ${slideIndex + 1}`; fallback.style.cssText='font-size:0.8em;color:#666;'; thumbItem.appendChild(fallback); } const numSpan = document.createElement('span'); numSpan.classList.add('slide-number'); numSpan.textContent = slideIndex + 1; thumbItem.appendChild(numSpan); thumbItem.addEventListener('click', () => { const targetIndex = parseInt(thumbItem.dataset.gotoSlide, 10); if (!isNaN(targetIndex) && swiper && !swiper.destroyed) { console.log(`Thumb -> Slide ${targetIndex}`); swiper.slideTo(targetIndex); hideThumbnailMenu(); } }); thumbnailGrid.appendChild(thumbItem); }); const count = swiper.slides?.length ?? 0; console.log(`${count} thumbs generated.`); }
+    function hideThumbnailMenu() { const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { overlay.classList.remove('visible'); console.log("Thumbnails hidden."); } }
+    function showThumbnailMenu() { if (swiperInstance && !swiperInstance.destroyed) { generateThumbnails(swiperInstance); } else { console.error("Cannot show thumbnails, swiper invalid."); if(thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; } const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { overlay.classList.add('visible'); console.log("Thumbnails shown."); } }
+    function toggleThumbnailMenu() { const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { const isGoingToBeVisible = !overlay.classList.contains('visible'); if (isGoingToBeVisible) { if (swiperInstance && !swiperInstance.destroyed) { generateThumbnails(swiperInstance); } else { console.error("Cannot show/gen thumbs, swiper invalid."); if(thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; } } overlay.classList.toggle('visible'); console.log(`Thumbnails ${overlay.classList.contains('visible')?'shown':'hidden'}.`); } }
+    function generateThumbnails(swiper) { if (!swiper || swiper.destroyed || !swiper.slides || !thumbnailGrid) { console.error("Cannot generate thumbnails: Swiper invalid or grid missing."); if (thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; return; } console.log("Generating thumbnails..."); thumbnailGrid.innerHTML = ''; swiper.slides.forEach((slide, index) => { const slideIndex = parseInt(slide.dataset.slideIndex ?? index, 10); const svgImgElement = slide.querySelector('img.slide-background-svg'); const svgUrl = svgImgElement?.src; const thumbItem = document.createElement('div'); thumbItem.classList.add('thumbnail-item'); thumbItem.dataset.gotoSlide = slideIndex; if (svgUrl) { const img = document.createElement('img'); img.src = svgUrl; img.alt = `Thumb ${slideIndex + 1}`; img.loading = 'lazy'; thumbItem.appendChild(img); } else { const fallback = document.createElement('span'); fallback.textContent = `Slide ${slideIndex + 1}`; fallback.style.cssText='font-size:0.8em;color:#666;'; thumbItem.appendChild(fallback); } const numSpan = document.createElement('span'); numSpan.classList.add('slide-number'); numSpan.textContent = slideIndex + 1; thumbItem.appendChild(numSpan); thumbItem.addEventListener('click', () => { const targetIndex = parseInt(thumbItem.dataset.gotoSlide, 10); if (!isNaN(targetIndex) && swiper && !swiper.destroyed) { console.log(`Thumb -> Slide ${targetIndex}`); swiper.slideTo(targetIndex); hideThumbnailMenu(); } }); thumbnailGrid.appendChild(thumbItem); }); const count = swiper.slides?.length ?? 0; console.log(`${count} thumbnails generated.`); }
 
-    /** Crée un nouveau pointeur laser */
+    /** Creates a new laser pointer */
     function createLaserPointer() {
         const laser = document.createElement('div');
         laser.className = 'laser-pointer';
@@ -91,14 +171,14 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: translate(-50%, -50%);
             z-index: 2147483647 !important;
             display: block;
-            mix-blend-mode: difference;
+            mix-blend-mode: normal;
             visibility: visible !important;
             opacity: 1 !important;
         `;
         return laser;
     }
 
-    /** Met à jour la visibilité du pointeur laser */
+    /** Updates the visibility of the laser pointer */
     function updateLaserPointerVisibility() {
         const fullscreenElement = (
             document.fullscreenElement || document.webkitFullscreenElement ||
@@ -107,22 +187,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log(`DEBUG: Fullscreen change detected, element:`, fullscreenElement);
 
-        // Supprimer l'ancien pointeur s'il existe
+        // Remove the old pointer if it exists
         if (laserPointer && laserPointer.parentNode) {
             laserPointer.parentNode.removeChild(laserPointer);
             laserPointer = null;
         }
 
         if (fullscreenElement) {
-            // Créer un nouveau pointeur
+            // Create a new pointer
             laserPointer = createLaserPointer();
-            // L'ajouter directement à l'élément en plein écran
+            // Add it directly to the fullscreen element
             fullscreenElement.appendChild(laserPointer);
             console.log('DEBUG: New laser pointer created and attached');
         }
     }
 
-    /** Gère le mouvement de la souris pour le pointeur laser */
+    /** Handles mouse movement for the laser pointer */
     function handleMouseMove(event) {
         if (laserPointer) {
             requestAnimationFrame(() => {
@@ -140,13 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /** Handles browser fullscreen change events. */
     function handleFullscreenChange() {
-        // Pas besoin du log isFullscreen ici car updateLaserPointerVisibility le fait déjà
-        console.log("DEBUG: handleFullscreenChange event triggered."); // LOG AJOUTÉ
+        // No need for the isFullscreen log here, updateLaserPointerVisibility does it already
+        console.log("DEBUG: handleFullscreenChange event triggered.");
 
-        // Mettre à jour la visibilité du pointeur
+        // Update pointer visibility
         updateLaserPointerVisibility();
 
-        // Mettre à jour Swiper après un délai
+        // Update Swiper after a delay
         setTimeout(() => {
             if (swiperInstance && !swiperInstance.destroyed) {
                 swiperInstance.update();
@@ -155,13 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentSlide) {
                     requestAnimationFrame(() => {
                         updateVideoPositions(currentSlide);
-                        // console.log("Video positions recalc after fullscreen timeout."); // Moins utile maintenant
                     });
                 }
             } else {
                 console.warn("handleFullscreenChange timeout: Swiper instance invalid/destroyed.");
             }
-        }, 300); // Garder le délai pour la mise à jour Swiper/vidéo
+        }, 300); // Keep the delay for Swiper/video update
     }
 
 
@@ -216,8 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Global Event Listeners --- //
     if (fullscreenButton) { fullscreenButton.addEventListener("click", toggleFullScreen); }
 
-    // --- AJOUT/MODIF POINTEUR ---
-    // Listeners pour le plein écran (appelle la fonction handleFullscreenChange modifiée)
+    // --- Laser Pointer Functions ---
+    // Listeners for fullscreen (call the modified handleFullscreenChange function)
     console.log("Adding fullscreen change listeners...");
     // --- Event Listeners ---
     window.addEventListener('mousemove', handleMouseMove);
@@ -226,17 +305,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mozfullscreenchange', updateLaserPointerVisibility);
     document.addEventListener('MSFullscreenChange', updateLaserPointerVisibility);
 
-    // Ajouter des écouteurs pour les vidéos
+    // Add listeners for videos
     document.querySelectorAll('video').forEach(video => {
         video.addEventListener('dblclick', () => {
-            // Créer le pointeur avant de passer en plein écran
+            // Create the pointer before going fullscreen
             if (laserPointer && laserPointer.parentNode) {
                 laserPointer.parentNode.removeChild(laserPointer);
             }
             laserPointer = createLaserPointer();
             document.body.appendChild(laserPointer);
             
-            // Passer en plein écran
+            // Go fullscreen
             if (video.requestFullscreen) {
                 video.requestFullscreen();
             } else if (video.webkitRequestFullscreen) {
@@ -249,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Ajouter les écouteurs d'événements sur toutes les vidéos existantes
+    // Add event listeners to existing videos
     document.querySelectorAll('video').forEach(video => {
         video.addEventListener('fullscreenchange', handleFullscreenChange);
         video.addEventListener('webkitfullscreenchange', handleFullscreenChange);
@@ -257,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         video.addEventListener('MSFullscreenChange', handleFullscreenChange);
     });
 
-    // Observer les nouvelles vidéos ajoutées dynamiquement
+    // Observe new videos added dynamically
     const videoObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
@@ -271,16 +350,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Observer les changements dans tout le document
+    // Observe changes in the entire document
     videoObserver.observe(document.body, {
         childList: true,
         subtree: true
     });
 
-    // Listener pour le mouvement de la souris
+    // Add listener for mouse movement
     console.log("Adding mousemove listener...");
     document.addEventListener("mousemove", handleMouseMove);
-    // --- FIN AJOUT/MODIF POINTEUR ---
+    // --- END ADD/MODIFY LASER POINTER ---
 
     // Keyboard listener
     document.addEventListener('keydown', (event) => { if (!swiperInstance || swiperInstance.destroyed || !swiperInstance.enabled) { return; } const targetTagName = event.target.tagName.toLowerCase(); if (['input', 'textarea', 'select'].includes(targetTagName)) { return; } const isMenuVisible = thumbnailMenuOverlay?.classList.contains('visible'); const isMenuKey = ['Escape', 'm', 'M'].includes(event.key); if (isMenuVisible && !isMenuKey) { return; } let shouldPreventDefault = true; switch (event.key) { case 'ArrowRight': case 'PageDown': case ' ': if (!event.shiftKey) { swiperInstance.slideNext(); } else { shouldPreventDefault = false; } break; case 'ArrowLeft': case 'PageUp': swiperInstance.slidePrev(); break; case 'Home': swiperInstance.slideTo(0); break; case 'End': if (swiperInstance.slides?.length > 0) { swiperInstance.slideTo(swiperInstance.slides.length - 1); } break; case 'f': case 'F': toggleFullScreen(); break; case 'm': case 'M': toggleThumbnailMenu(); break; case 'Escape': if (isMenuVisible) { hideThumbnailMenu(); } else { shouldPreventDefault = false; } break; default: shouldPreventDefault = false; break; } if (shouldPreventDefault) { event.preventDefault(); } });
@@ -293,12 +372,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Window load listener
     window.addEventListener("load", () => { console.log("Window 'load' event received."); setTimeout(() => { if (!swiperInstance || swiperInstance.destroyed || !swiperInstance.slides || swiperInstance.slides.length === 0) { console.warn("Window load timeout: Swiper invalid/empty."); return; } const currentSlide = swiperInstance.slides[swiperInstance.activeIndex]; if (currentSlide) { updateVideoPositions(currentSlide); } else { console.warn("Window load timeout: Active slide not found."); } }, 300); });
 
-    // --- AJOUT/MODIF POINTEUR ---
+    // --- LASER POINTER FUNCTIONS ---
     // Initial check for laser pointer visibility
     if(laserPointer) {
         console.log("Performing initial laser pointer visibility check...");
         updateLaserPointerVisibility(); // Set initial state (should be hidden)
     }
-    // --- FIN AJOUT/MODIF POINTEUR ---
+    // --- END LASER POINTER FUNCTIONS ---
 
 }); // End DOMContentLoaded listener
