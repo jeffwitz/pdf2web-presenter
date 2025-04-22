@@ -7,11 +7,99 @@
   {# The title is passed from the Python generator #}
   <title>{{ html_title }}</title>
 
-  {# Link to the Swiper CSS file using the path from the configuration #}
+  {# Link to Swiper CSS via config #}
   <link rel="stylesheet" href="{{ swiper_css_path }}" />
 
   <style>
-    /* --- Base Page Styles --- */
+    /* Responsive thumbnails: hide grid and show list on small screens */
+    @media (max-width: 700px) {
+      .thumbnail-grid { display: none !important; }
+      .thumbnail-number-list { display: flex !important; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 16px 0 0 0; }
+    }
+    @media (max-height: 500px) {
+      .thumbnail-grid { display: none !important; }
+      .thumbnail-number-list { display: flex !important; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 16px 0 0 0; }
+    }
+    @media (min-width: 701px) {
+      .thumbnail-number-list { display: none !important; }
+    }
+    .thumbnail-number-list {
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: flex-start;
+      font-size: 1.2em;
+      user-select: none;
+    }
+    .thumbnail-number-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px; height: 48px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      color: #222;
+      font-weight: bold;
+      border: 1px solid #bbb;
+      cursor: pointer;
+      transition: background 0.2s, border 0.2s;
+      position: relative;
+      overflow: visible; /* Pour permettre le popover */
+    }
+    .mini-thumb-popover {
+      position: absolute;
+      left: 50%;
+      bottom: 120%;
+      transform: translateX(-50%);
+      min-width: 120px;
+      max-width: 260px;
+      max-height: 180px;
+      background: #fff;
+      border: 1.5px solid #888;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+      padding: 8px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s cubic-bezier(.4,0,.2,1);
+    }
+    .mini-thumb-popover.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .mini-thumb-popover img {
+      display: block;
+      max-width: 100%;
+      max-height: 164px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .thumbnail-number-item:hover, .thumbnail-number-item:focus {
+      background: #e0eaff;
+      border-color: #007aff;
+      outline: none;
+    }
+    .thumbnail-number-item img {
+      width: 100%; height: 100%; object-fit: contain;
+      display: block;
+      border-radius: 8px;
+      background: #fff;
+    }
+    /* Pour éviter le shift lors du remplacement numéro <-> image */
+    .thumbnail-number-item span { display: block; width: 100%; text-align: center; }
+    .thumbnail-number-item .slide-number-mini { font-size: 1em; color: #222; }
+    .thumbnail-number-item .slide-number-mini:hover { color: #007aff; }
+    /* Optional: visual effect on thumbnail */
+    .thumbnail-number-item .mini-thumb-img { box-shadow: 0 0 8px rgba(0,122,255,0.15); }
+  
+    /* --- Base page styles --- */
     html, body {
       position: relative;
       height: 100%;
@@ -25,7 +113,7 @@
       font-family: sans-serif;
     }
 
-    /* --- Swiper Container Wrapper --- */
+    /* --- Swiper container wrapper --- */
     .swiper-container-wrapper {
       width: 100%;
       max-width: 95vw;
@@ -40,11 +128,11 @@
       margin-right: auto;
     }
 
-    /* --- Swiper Instance --- */
+    /* --- Swiper instance --- */
     .swiper {
       width: 100%;
       height: 100%;
-      /* Default cursor for non-fullscreen */
+      /* Default cursor outside fullscreen */
       cursor: auto;
     }
 
@@ -62,7 +150,7 @@
       cursor: none !important;
     }
 
-    /* Styles pour les vidéos */
+    /* Styles for videos */
     .slide-video-overlay {
         position: absolute;
         width: 100%;
@@ -71,7 +159,7 @@
         background-color: black;
     }
 
-    /* --- Swiper Slide (Base) --- */
+    /* --- Swiper slide (base) --- */
     .swiper-slide {
       position: relative;
       width: 100%;
@@ -96,7 +184,7 @@
     }
     /* --- END HACK --- */
 
-    /* --- Slide Background (SVG) --- */
+    /* --- Slide background (SVG) --- */
     .slide-background-svg {
       position: absolute;
       top: 0;
@@ -107,14 +195,14 @@
       z-index: 1; /* Behind slide content */
     }
 
-    /* --- Video Overlay --- */
+    /* --- Video overlay --- */
     .slide-video-overlay {
       position: absolute;
       z-index: 10; /* Above background */
       object-fit: cover;
     }
 
-    /* --- Fullscreen Button --- */
+    /* --- Fullscreen button --- */
     #fullscreen-button {
       position: absolute;
       bottom: 10px;
@@ -139,7 +227,7 @@
       vertical-align: middle;
     }
 
-    /* --- Fullscreen Mode Styles (Container Only) --- */
+    /* --- Fullscreen mode styles (container only) --- */
     .swiper-container-wrapper:-webkit-full-screen,
     .swiper-container-wrapper:-moz-full-screen,
     .swiper-container-wrapper:-ms-fullscreen,
@@ -154,8 +242,8 @@
       /* aspect-ratio: unset; */ /* Optional */
     }
 
-    /* --- Hide System Cursor in Fullscreen --- */
-    /* Apply to container and ALL its children */
+    /* --- Hide system cursor in fullscreen --- */
+    /* Apply to container and all its children */
     .swiper-container-wrapper:-webkit-full-screen,
     .swiper-container-wrapper:-moz-full-screen,
     .swiper-container-wrapper:-ms-fullscreen,
@@ -168,13 +256,39 @@
     }
     /* --- END Hide System Cursor --- */
 
-    /* Hide the custom fullscreen button when native fullscreen is active */
+    /* Hide custom fullscreen button when native fullscreen is active */
     .swiper-container-wrapper:fullscreen #fullscreen-button {
         display: none;
     }
+    /* --- Thumbnail menu: force display in fullscreen --- */
+    /* Force thumbnail menu to remain visible and above in fullscreen, even if its parent is not fullscreen */
+:fullscreen #thumbnail-menu-overlay,
+:-webkit-full-screen #thumbnail-menu-overlay,
+:-moz-full-screen #thumbnail-menu-overlay,
+:-ms-fullscreen #thumbnail-menu-overlay {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    background-color: #181818 !important; /* Opaque, très foncé */
+    border: 4px solid #fff !important;
+}
+:fullscreen #thumbnail-menu-overlay .thumbnail-grid-container {
+    z-index: 2147483647 !important;
+}
+:fullscreen #thumbnail-menu-overlay.visible,
+:-webkit-full-screen #thumbnail-menu-overlay.visible,
+:-moz-full-screen #thumbnail-menu-overlay.visible,
+:-ms-fullscreen #thumbnail-menu-overlay.visible {
+    opacity: 1 !important;
+    background-color: #181818 !important;
+}
 
-    /* --- Laser Pointer DIV Style --- */
-    /* Animation du pointeur laser */
+
+
+    /* --- Laser pointer style --- */
+    /* Laser pointer animation */
     @keyframes pulse {
       0% { transform: translate(-50%, -50%) scale(1); }
       50% { transform: translate(-50%, -50%) scale(1.1); }
@@ -188,9 +302,9 @@
       50% { transform: translate(-50%, -50%) scale(1.1); }
       100% { transform: translate(-50%, -50%) scale(1); }
     }
-    /* --- END Laser Pointer Style --- */
+    /* --- END laser pointer style --- */
 
-    /* --- Error Message Styling --- */
+    /* --- Error message style --- */
     .error-message {
       color: red;
       z-index: 2; /* Relative to slide */
@@ -203,7 +317,7 @@
       display: inline-block;
     }
 
-    /* --- Thumbnail Menu Styles --- */
+    /* --- Thumbnail menu styles --- */
     .thumbnail-menu {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background-color: rgba(0, 0, 0, 0.85); z-index: 10000; /* Ensure menu is above pointer if needed, but below browser UI */
@@ -249,19 +363,19 @@
   {# Main wrapper controlling presentation size and centering #}
   <div class="swiper-container-wrapper" id="presentation-container">
 
-    {# Swiper Initialization Target #}
+    {# Swiper initialization target #}
     <div class="swiper">
       <div class="swiper-wrapper">
 
-        {# Loop through each slide object prepared by the Python script #}
+        {# Loop through each slide prepared by the Python script #}
         {% for slide in slides %}
-        {# --- Slide Start --- #}
+        {# --- Slide start --- #}
         <div class="swiper-slide"
              data-slide-index="{{ slide.pageIndex }}"
              data-pdf-page-width="{{ slide.dimensions.width_pt | round(5) if slide.dimensions and slide.dimensions.width_pt is defined else fallback_slide_width | round(5) }}"
              data-pdf-page-height="{{ slide.dimensions.height_pt | round(5) if slide.dimensions and slide.dimensions.height_pt is defined else fallback_slide_height | round(5) }}">
 
-          {# Display SVG background if it exists #}
+          {# Display SVG background if present #}
           {% if slide.svg_exists %}
             <img class="slide-background-svg"
                  src="{{ slide.svg_path | e }}"
@@ -294,13 +408,13 @@
             {% endif %}
           {% endfor %}{# End video loop #}
 
-        </div> {# --- Slide End --- #}
+        </div> {# --- Slide end --- #}
         {% endfor %}{# End slide loop #}
 
       </div> {# End swiper-wrapper #}
     </div> {# End swiper #}
 
-    {# --- Fullscreen Button --- #}
+    {# --- Fullscreen button --- #}
     <button id="fullscreen-button" title="Fullscreen (F)">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
           <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
@@ -309,20 +423,151 @@
 
   </div> {# End swiper-container-wrapper #}
 
-  {# --- Thumbnail Menu Overlay --- #}
+  {# --- Thumbnail menu overlay --- #}
   <div id="thumbnail-menu-overlay" class="thumbnail-menu">
     <div class="thumbnail-grid-container">
         <button id="close-thumbnail-menu" title="Close (Esc)" aria-label="Close thumbnail menu">×</button>
         <div class="thumbnail-grid">
             <p>Loading thumbnails...</p>
         </div>
+        <!-- Liste responsive des numéros de slides (affichée sur petit écran) -->
+        <div class="thumbnail-number-list"></div> <!-- JS remplit -->
     </div>
   </div>
-  {# --- End Thumbnail Menu Overlay --- #}
+  {# --- End thumbnail menu overlay --- #}
 
   {# --- Scripts --- #}
   <script src="{{ swiper_js_path }}"></script>
   <script src="{{ presentation_js_path }}"></script>
+  <script>
+  // --- Special fullscreen thumbnail menu handling (laser pointer trick) ---
+  (function() {
+    const overlay = document.getElementById('thumbnail-menu-overlay');
+    let originalParent = null;
+    let originalNext = null;
+    function moveOverlayToFullscreen() {
+      const fsElem = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      if (!overlay) return;
+      if (fsElem && overlay.parentNode !== fsElem) {
+        originalParent = overlay.parentNode;
+        originalNext = overlay.nextSibling;
+        fsElem.appendChild(overlay);
+        overlay.style.zIndex = '2147483647';
+      } else if (!fsElem && originalParent) {
+        if (originalNext) {
+          originalParent.insertBefore(overlay, originalNext);
+        } else {
+          originalParent.appendChild(overlay);
+        }
+        overlay.style.zIndex = '';
+        originalParent = null;
+        originalNext = null;
+      }
+    }
+    document.addEventListener('fullscreenchange', moveOverlayToFullscreen);
+    document.addEventListener('webkitfullscreenchange', moveOverlayToFullscreen);
+    document.addEventListener('mozfullscreenchange', moveOverlayToFullscreen);
+    document.addEventListener('MSFullscreenChange', moveOverlayToFullscreen);
+    // Appel initial au cas où déjà en fs
+    moveOverlayToFullscreen();
+  })();
+  // --- Dynamically generate slide number list for mobile ---
+  function generateNumberList() {
+    const swiperEl = document.querySelector('.swiper');
+    const numberList = document.querySelector('.thumbnail-number-list');
+    if (!swiperEl || !numberList) return;
+    numberList.innerHTML = '';
+    const slides = swiperEl.querySelectorAll('.swiper-slide');
+    slides.forEach((slide, idx) => {
+      const slideIdx = parseInt(slide.dataset.slideIndex ?? idx, 10);
+      const numItem = document.createElement('div');
+      numItem.className = 'thumbnail-number-item';
+      numItem.tabIndex = 0;
+      const span = document.createElement('span');
+      span.textContent = (slideIdx + 1).toString();
+      span.className = 'slide-number-mini';
+      numItem.appendChild(span);
+      let img = null;
+      let svgUrl = null;
+      const svgImg = slide.querySelector('img.slide-background-svg');
+      if (svgImg) svgUrl = svgImg.src;
+      let popoverTimeout = null;
+      let popover = null;
+      function showPopover() {
+        if (svgUrl) {
+          if (!popover) {
+            popover = document.createElement('div');
+            popover.className = 'mini-thumb-popover';
+            const imgEl = document.createElement('img');
+            imgEl.src = svgUrl;
+            imgEl.alt = `Miniature slide ${slideIdx + 1}`;
+            popover.appendChild(imgEl);
+            numItem.appendChild(popover);
+          }
+          setTimeout(() => popover.classList.add('visible'), 10);
+        }
+      }
+      function hidePopover() {
+        if (popover) {
+          popover.classList.remove('visible');
+          setTimeout(() => {
+            if (popover && popover.parentNode) popover.parentNode.removeChild(popover);
+            popover = null;
+          }, 180);
+        }
+      }
+      numItem.addEventListener('mouseenter', () => {
+        popoverTimeout = setTimeout(showPopover, 500);
+      });
+      numItem.addEventListener('mouseleave', () => {
+        clearTimeout(popoverTimeout);
+        hidePopover();
+      });
+      numItem.addEventListener('focus', () => {
+        popoverTimeout = setTimeout(showPopover, 500);
+      });
+      numItem.addEventListener('blur', () => {
+        clearTimeout(popoverTimeout);
+        hidePopover();
+      });
+      function handleGoToSlide(e) {
+        e.stopPropagation();
+        let swiper = null;
+        if (window.swiperInstance && typeof window.swiperInstance.slideTo === 'function') {
+          swiper = window.swiperInstance;
+        } else if (window.Swiper && window.Swiper.instances && window.Swiper.instances.length > 0) {
+          swiper = window.Swiper.instances[0];
+        } else {
+          const swiperEl = document.querySelector('.swiper') || document.querySelector('.swiper-container');
+          if (swiperEl && swiperEl.swiper) swiper = swiperEl.swiper;
+        }
+        if (swiper && typeof swiper.slideTo === 'function') {
+          swiper.slideTo(slideIdx);
+        }
+        const overlay = document.getElementById('thumbnail-menu-overlay');
+        if (overlay) overlay.classList.remove('visible');
+      }
+      numItem.addEventListener('click', handleGoToSlide);
+      numItem.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleGoToSlide(e);
+        }
+      });
+      numberList.appendChild(numItem);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', generateNumberList);
+  window.addEventListener('resize', generateNumberList);
+  // Also regenerate when menu is shown (in case of dynamic open)
+  const overlay = document.getElementById('thumbnail-menu-overlay');
+  if (overlay) {
+    overlay.addEventListener('transitionend', function(e) {
+      if (overlay.classList.contains('visible')) generateNumberList();
+    });
+  }
+
+  </script>
 
 </body>
 </html>
