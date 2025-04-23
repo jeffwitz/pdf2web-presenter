@@ -223,6 +223,44 @@ if (overlayElem) {
     if (!swiperElement) { console.error("CRITICAL ERROR: .swiper element not found."); alert("Error: Missing swiper element."); return; }
 
     // --- Utility Functions --- //
+    
+    /**
+     * Forces the reload of SVG images to ensure complete loading
+     * @param {object} swiper - The Swiper instance
+     * @param {boolean} includeAdjacent - Whether to also reload adjacent slides
+     */
+    function forceReloadSvgImages(swiper, includeAdjacent = true) {
+        if (!swiper || swiper.destroyed || !swiper.slides) {
+            console.warn("Cannot reload SVG images: Invalid Swiper instance");
+            return;
+        }
+        
+        const allSlides = swiper.slides || [];
+        const currentIndex = swiper.activeIndex;
+        const slidesToReload = [];
+        
+        // Get current slide and optionally adjacent slides
+        if (includeAdjacent && currentIndex > 0) slidesToReload.push(allSlides[currentIndex - 1]);
+        slidesToReload.push(allSlides[currentIndex]);
+        if (includeAdjacent && currentIndex < allSlides.length - 1) slidesToReload.push(allSlides[currentIndex + 1]);
+        
+        // Reload SVG images
+        slidesToReload.forEach(slide => {
+            if (!slide) return;
+            const svgImage = slide.querySelector('img.slide-background-svg');
+            if (svgImage && svgImage.src) {
+                const originalSrc = svgImage.src;
+                // Force reload by adding/removing timestamp parameter
+                const timestamp = new Date().getTime();
+                const newSrc = originalSrc.includes('?') ? 
+                    `${originalSrc}&_reload=${timestamp}` : 
+                    `${originalSrc}?_reload=${timestamp}`;
+                
+                console.log(`Reloading SVG image for slide ${slide.dataset.slideIndex || '?'}: ${newSrc}`);
+                svgImage.src = newSrc;
+            }
+        });
+    }
     function updateVideoPositions(slideElement) {
         if (isUpdatingPositions) { return; }
         if (!slideElement || !presentationContainer || !swiperInstance || swiperInstance.destroyed) { console.error("updateVideoPositions: Missing elements or Swiper invalid."); return; }
@@ -259,7 +297,48 @@ if (overlayElem) {
             } finally { isUpdatingPositions = false; }
         });
     }
-    function handleSlideChange(swiper) { if (!swiper || swiper.destroyed || !swiper.slides || swiper.slides.length === 0) { console.warn("handleSlideChange: Swiper invalid/destroyed/empty."); return; } const activeSlide = swiper.slides[swiper.activeIndex]; const activeIndex = swiper.activeIndex; if (activeSlide) { requestAnimationFrame(() => updateVideoPositions(activeSlide)); } else { console.warn(`handleSlideChange: Active slide (index ${activeIndex}) not found.`); } swiper.slides.forEach((slide, index) => { const videos = slide.querySelectorAll("video.slide-video-overlay"); videos.forEach(videoElement => { if (index === activeIndex) { if (videoElement.hasAttribute("data-autoplay")) { const playPromise = videoElement.play(); if (playPromise !== undefined) { playPromise.catch(error => { if (error.name !== 'NotAllowedError') { console.warn(`Play failed ${videoElement.id}:`, error.message); } }); } } } else { if (!videoElement.paused) { videoElement.pause(); } if (videoElement.currentTime !== 0) { videoElement.currentTime = 0; } } }); }); }
+    function handleSlideChange(swiper) { 
+        if (!swiper || swiper.destroyed || !swiper.slides || swiper.slides.length === 0) { 
+            console.warn("handleSlideChange: Swiper invalid/destroyed/empty."); 
+            return; 
+        } 
+        const activeSlide = swiper.slides[swiper.activeIndex]; 
+        const activeIndex = swiper.activeIndex; 
+        
+        if (activeSlide) { 
+            requestAnimationFrame(() => updateVideoPositions(activeSlide)); 
+            
+            // Force reload SVG images for better display
+            setTimeout(() => forceReloadSvgImages(swiper, true), 50);
+        } else { 
+            console.warn(`handleSlideChange: Active slide (index ${activeIndex}) not found.`); 
+        } 
+        
+        swiper.slides.forEach((slide, index) => { 
+            const videos = slide.querySelectorAll("video.slide-video-overlay"); 
+            videos.forEach(videoElement => { 
+                if (index === activeIndex) { 
+                    if (videoElement.hasAttribute("data-autoplay")) { 
+                        const playPromise = videoElement.play(); 
+                        if (playPromise !== undefined) { 
+                            playPromise.catch(error => { 
+                                if (error.name !== 'NotAllowedError') { 
+                                    console.warn(`Play failed ${videoElement.id}:`, error.message); 
+                                } 
+                            }); 
+                        } 
+                    } 
+                } else { 
+                    if (!videoElement.paused) { 
+                        videoElement.pause(); 
+                    } 
+                    if (videoElement.currentTime !== 0) { 
+                        videoElement.currentTime = 0; 
+                    } 
+                } 
+            }); 
+        }); 
+    }
     function toggleFullScreen() { const presentationContainer = document.getElementById("presentation-container"); const notInFullscreen = (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement); if (notInFullscreen) { const element = presentationContainer; if (!element) return; if (element.requestFullscreen) { element.requestFullscreen().catch(err => console.error(`FS Error: ${err.message}`)); } else if (element.mozRequestFullScreen) { element.mozRequestFullScreen(); } else if (element.webkitRequestFullscreen) { element.webkitRequestFullscreen(); } else if (element.msRequestFullscreen) { element.msRequestFullscreen(); } } else { if (document.exitFullscreen) { document.exitFullscreen().catch(err => console.error(`Exit FS Error: ${err.message}`)); } else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); } else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); } else if (document.msExitFullscreen) { document.msExitFullscreen(); } } }
     function hideThumbnailMenu() { const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { overlay.classList.remove('visible'); console.log("Thumbnails hidden."); } }
     function showThumbnailMenu() { if (swiperInstance && !swiperInstance.destroyed) { generateThumbnails(swiperInstance); } else { console.error("Cannot show thumbnails, swiper invalid."); if(thumbnailGrid) thumbnailGrid.innerHTML = '<p class="error-message">Error loading.</p>'; } const overlay = document.getElementById("thumbnail-menu-overlay"); if (overlay) { overlay.classList.add('visible'); console.log("Thumbnails shown."); } }
@@ -343,6 +422,22 @@ if (overlayElem) {
         // Update pointer visibility
         updateLaserPointerVisibility();
 
+        // Force reload SVG images to ensure complete loading in any mode
+        const fullscreenElement = (
+            document.fullscreenElement || document.webkitFullscreenElement ||
+            document.mozFullScreenElement || document.msFullscreenElement
+        );
+        
+        console.log(fullscreenElement ? "DEBUG: Fullscreen detected" : "DEBUG: Standard mode detected");
+        console.log("Reloading SVG images...");
+        
+        // Reload SVG images always - not just in fullscreen
+        setTimeout(() => {
+            if (swiperInstance && !swiperInstance.destroyed) {
+                forceReloadSvgImages(swiperInstance, true);
+            }
+        }, 100); // Short delay before reloading images
+
         // Update Swiper after a delay
         setTimeout(() => {
             if (swiperInstance && !swiperInstance.destroyed) {
@@ -386,15 +481,22 @@ if (overlayElem) {
                       else { console.warn("slideChangeTransitionEnd: Swiper invalid/destroyed."); }
                  },
                  resize: function (/* swiper */) {
-                     clearTimeout(resizeTimeoutId);
-                     resizeTimeoutId = setTimeout(() => {
-                         console.log("Executing resize timeout...");
-                         if (!swiperInstance || swiperInstance.destroyed || !swiperInstance.slides || swiperInstance.slides.length === 0) { console.warn("Resize timeout: Swiper invalid/empty."); return; }
-                         const currentSlide = swiperInstance.slides[swiperInstance.activeIndex];
-                         if (currentSlide) { updateVideoPositions(currentSlide); }
-                         else { console.warn("Resize timeout: Active slide not found."); }
-                     }, 250);
-                 }
+                    clearTimeout(resizeTimeoutId);
+                    resizeTimeoutId = setTimeout(() => {
+                        console.log("Executing resize timeout...");
+                        if (!swiperInstance || swiperInstance.destroyed || !swiperInstance.slides || swiperInstance.slides.length === 0) { 
+                            console.warn("Resize timeout: Swiper invalid/empty."); 
+                            return; 
+                        }
+                        const currentSlide = swiperInstance.slides[swiperInstance.activeIndex];
+                        if (currentSlide) { 
+                            updateVideoPositions(currentSlide); 
+                            // Force reload SVG images after resize
+                            forceReloadSvgImages(swiperInstance, true);
+                        }
+                        else { console.warn("Resize timeout: Active slide not found."); }
+                    }, 250);
+                }
             },
         };
 
