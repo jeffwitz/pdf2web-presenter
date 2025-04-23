@@ -133,6 +133,39 @@
       margin-right: auto;
     }
 
+    /* Contextual navigation buttons (hidden by default) */
+    .context-nav-btn {
+      position: absolute;
+      z-index: 2500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      background: rgba(255,255,255,0.9);
+      color: #222;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+      font-size: 1.5rem;
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .swiper-container-wrapper.context-nav-visible .context-nav-btn {
+      opacity: 1 !important;
+      pointer-events: auto;
+    }
+    #nav-prev { left: 16px; top: 50%; transform: translateY(-50%); }
+    #nav-next { right: 16px; top: 50%; transform: translateY(-50%); }
+    #nav-menu { position: absolute; top: 16px; right: 72px; }
+    #fullscreen-button { position: absolute; top: 16px; right: 16px; }
+
+    /* Swap enter/exit fullscreen icons via class */
+    #fullscreen-button .enter-icon { display: inline-flex; }
+    #fullscreen-button .exit-icon { display: none; }
+    /* On fullscreen, toggle via .fs class */
+    #fullscreen-button.fs .enter-icon { display: none; }
+    #fullscreen-button.fs .exit-icon { display: inline-flex; }
+
     /* --- Swiper instance --- */
     .swiper {
       width: 100%;
@@ -207,31 +240,6 @@
       object-fit: cover;
     }
 
-    /* --- Fullscreen button --- */
-    #fullscreen-button {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      padding: 8px 12px;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      z-index: 150; /* Above debugged slides */
-      opacity: 0.7;
-      transition: opacity 0.3s ease;
-      line-height: 0;
-    }
-    #fullscreen-button:hover {
-      opacity: 1;
-    }
-    #fullscreen-button svg {
-      width: 1em;
-      height: 1em;
-      vertical-align: middle;
-    }
-
     /* --- Fullscreen mode styles (container only) --- */
     .swiper-container-wrapper:-webkit-full-screen,
     .swiper-container-wrapper:-moz-full-screen,
@@ -261,10 +269,6 @@
     }
     /* --- END Hide System Cursor --- */
 
-    /* Hide custom fullscreen button when native fullscreen is active */
-    .swiper-container-wrapper:fullscreen #fullscreen-button {
-        display: none;
-    }
     /* --- Thumbnail menu: force display in fullscreen --- */
     /* Force thumbnail menu to remain visible and above in fullscreen, even if its parent is not fullscreen */
 :fullscreen #thumbnail-menu-overlay,
@@ -488,10 +492,19 @@
       </div> {# End swiper-wrapper #}
     </div> {# End swiper #}
 
+    {# --- Contextual navigation buttons --- #}
+    <button id="nav-prev" class="context-nav-btn" title="Previous slide (←)">&#8592;</button>
+    <button id="nav-next" class="context-nav-btn" title="Next slide (→)">&#8594;</button>
+    <button id="nav-menu" class="context-nav-btn" title="Show menu (M)">&#9776;</button>
     {# --- Fullscreen button --- #}
-    <button id="fullscreen-button" title="Fullscreen (F)">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+    <button id="fullscreen-button" class="context-nav-btn" title="Toggle Fullscreen (F)">
+      <!-- Enter fullscreen icon -->
+      <svg class="enter-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+      </svg>
+      <!-- Exit fullscreen icon -->
+      <svg class="exit-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2 2h4v1.5H3.5v3.5H2V2zm12 0v4h-1.5V3.5h-3.5V2H14zM2 14v-4h1.5v3.5h3.5V14H2zm12 0h-4v-1.5h3.5v-3.5H14V14z"/>
       </svg>
     </button>
 

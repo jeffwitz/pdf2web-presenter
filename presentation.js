@@ -204,7 +204,7 @@ if (overlayElem) {
     });
 }
     const presentationContainer = document.getElementById("presentation-container");
-    const fullscreenButton = document.getElementById("fullscreen-button");
+    // const fullscreenButton = document.getElementById("fullscreen-button"); // removed: handled in contextual nav
     const thumbnailMenuOverlay = document.getElementById("thumbnail-menu-overlay");
     const thumbnailGrid = document.querySelector(".thumbnail-grid");
     const closeThumbnailButton = document.getElementById("close-thumbnail-menu");
@@ -512,7 +512,7 @@ if (overlayElem) {
     }
 
     // --- Global Event Listeners --- //
-    if (fullscreenButton) { fullscreenButton.addEventListener("click", toggleFullScreen); }
+    // (fullscreen button binding moved into contextual navigation logic)
 
     // --- Laser Pointer Functions ---
     // Listeners for fullscreen (call the modified handleFullscreenChange function)
@@ -523,6 +523,17 @@ if (overlayElem) {
     document.addEventListener('webkitfullscreenchange', updateLaserPointerVisibility);
     document.addEventListener('mozfullscreenchange', updateLaserPointerVisibility);
     document.addEventListener('MSFullscreenChange', updateLaserPointerVisibility);
+
+    // Update fullscreen button icon on change
+    function updateFullscreenIcon() {
+        const btn = document.getElementById('fullscreen-button');
+        const fsElem = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        if (btn) {
+            if (fsElem) btn.classList.add('fs'); else btn.classList.remove('fs');
+        }
+    }
+    ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(evt => document.addEventListener(evt, updateFullscreenIcon));
+    updateFullscreenIcon();
 
     // Add listeners for videos
     document.querySelectorAll('video').forEach(video => {
@@ -578,11 +589,78 @@ if (overlayElem) {
     // Add listener for mouse movement
     console.log("Adding mousemove listener...");
     document.addEventListener("mousemove", handleMouseMove);
-    // --- END ADD/MODIFY LASER POINTER ---
+
+    // --- Contextual navigation buttons --- //
+    (function() {
+        const container = document.querySelector('.swiper-container-wrapper');
+        if (!container) return;
+        const edgeZone = 48;
+        let hideTimeout = null, lastEdge = null;
+        function showNav() {
+            container.classList.add('context-nav-visible');
+            if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+        }
+        function scheduleHideNav() {
+            if (hideTimeout) clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                container.classList.remove('context-nav-visible');
+                lastEdge = null;
+            }, 500);
+        }
+        function handleMouseMove(e) {
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left, y = e.clientY - rect.top;
+            if (x<0||y<0||x>rect.width||y>rect.height) return;
+            let edge = null;
+            if (x <= edgeZone) edge = 'left';
+            else if (x >= rect.width - edgeZone) edge = 'right';
+            else if (y <= edgeZone && x >= rect.width - 2*edgeZone) edge = 'topright';
+            if (edge) { lastEdge = edge; showNav(); }
+        }
+        container.addEventListener('mousemove', handleMouseMove, {passive:true});
+        container.querySelectorAll('.context-nav-btn').forEach(btn => {
+            btn.addEventListener('focus', showNav);
+            btn.addEventListener('mouseenter', showNav);
+            btn.addEventListener('mouseleave', scheduleHideNav);
+        });
+        container.querySelector('#nav-prev')?.addEventListener('click', () => { swiperInstance.slidePrev(); showNav(); });
+        container.querySelector('#nav-next')?.addEventListener('click', () => { swiperInstance.slideNext(); showNav(); });
+        container.querySelector('#nav-menu')?.addEventListener('click', () => { toggleThumbnailMenu(); showNav(); });
+        container.querySelector('#fullscreen-button')?.addEventListener('click', () => { toggleFullScreen(); showNav(); });
+        container.addEventListener('click', e => {
+            // Slide navigation on click outside nav buttons
+            const el = e.target instanceof Element ? e.target : e.target.parentElement;
+            if (!el || !el.closest('.context-nav-btn')) {
+                swiperInstance.slideNext();
+                showNav();
+            }
+        });
+        // Hide nav when leaving container area
+        container.addEventListener('mouseleave', scheduleHideNav);
+    })();
 
     // Keyboard listener
-    document.addEventListener('keydown', (event) => { if (!swiperInstance || swiperInstance.destroyed || !swiperInstance.enabled) { return; } const targetTagName = event.target.tagName.toLowerCase(); if (['input', 'textarea', 'select'].includes(targetTagName)) { return; } const isMenuVisible = thumbnailMenuOverlay?.classList.contains('visible'); const isMenuKey = ['Escape', 'm', 'M'].includes(event.key); if (isMenuVisible && !isMenuKey) { return; } let shouldPreventDefault = true; switch (event.key) { case 'ArrowRight': case 'PageDown': case ' ': if (!event.shiftKey) { swiperInstance.slideNext(); } else { shouldPreventDefault = false; } break; case 'ArrowLeft': case 'PageUp': swiperInstance.slidePrev(); break; case 'Home': swiperInstance.slideTo(0); break; case 'End': if (swiperInstance.slides?.length > 0) { swiperInstance.slideTo(swiperInstance.slides.length - 1); } break; case 'f': case 'F': toggleFullScreen(); break; case 'm': case 'M': toggleThumbnailMenu(); break; case 'Escape': if (isMenuVisible) { hideThumbnailMenu(); } else { shouldPreventDefault = false; } break; default: shouldPreventDefault = false; break; } if (shouldPreventDefault) { event.preventDefault(); } });
-    console.log("Keyboard event listener added.");
+    document.addEventListener('keydown', (event) => {
+        if (!swiperInstance || swiperInstance.destroyed || !swiperInstance.enabled) { return; }
+        // évite l’erreur si event.target n’est pas un element
+        const targetTagName = (event.target && event.target.tagName) ? event.target.tagName.toLowerCase() : '';
+        if (['input','textarea','select'].includes(targetTagName)) { return; }
+        const isMenuVisible = thumbnailMenuOverlay?.classList.contains('visible');
+        const isMenuKey = ['Escape','m','M'].includes(event.key);
+        if (isMenuVisible && !isMenuKey) { return; }
+        let shouldPreventDefault = true;
+        switch (event.key) {
+            case 'ArrowRight': case 'PageDown': case ' ': if (!event.shiftKey) { swiperInstance.slideNext(); } else { shouldPreventDefault = false; } break;
+            case 'ArrowLeft': case 'PageUp': swiperInstance.slidePrev(); break;
+            case 'Home': swiperInstance.slideTo(0); break;
+            case 'End': if (swiperInstance.slides?.length > 0) { swiperInstance.slideTo(swiperInstance.slides.length - 1); } break;
+            case 'f': case 'F': toggleFullScreen(); break;
+            case 'm': case 'M': toggleThumbnailMenu(); break;
+            case 'Escape': if (isMenuVisible) { hideThumbnailMenu(); } else { shouldPreventDefault = false; } break;
+            default: shouldPreventDefault = false; break;
+        }
+        if (shouldPreventDefault) { event.preventDefault(); }
+    });
 
     // Thumbnail menu listeners
     if (thumbnailMenuOverlay) { thumbnailMenuOverlay.addEventListener('click', (event) => { if (event.target === thumbnailMenuOverlay) { hideThumbnailMenu(); } }); }
