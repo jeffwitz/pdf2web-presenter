@@ -345,6 +345,8 @@
       flex-direction: column; 
       box-sizing: border-box;
       /* Overflow est maintenant géré par .thumbnail-grid */
+      /* Plus d'espace pour meilleur rendu avec ascenseur */
+      overflow: hidden;
     }
     #close-thumbnail-menu {
       position: absolute; top: 8px; right: 12px; background: none; border: none;
@@ -354,41 +356,60 @@
     #close-thumbnail-menu:hover { color: #333; }
     .thumbnail-grid {
       display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 15px; 
+      /* Optimiser pour un meilleur rendu vertical avec un nombre fixe de colonnes */
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      /* Assurer un nombre minimum de colonnes même sur grands écrans */
+      grid-auto-flow: row; /* Force l'arrangement prioritaire en lignes */
+      grid-auto-rows: min-content; /* Hauteur minimale nécessaire */
+      /* Augmenter légèrement la distance entre les éléments */
+      gap: 18px;
       width: 100%; 
       height: calc(100% - 40px); /* Soustraire la hauteur du bouton de fermeture */
       overflow-y: auto; /* Garantit le défilement vertical */
       overflow-x: hidden; /* Évite le défilement horizontal */
-      scrollbar-width: thin; /* Pour Firefox */
-      scrollbar-color: rgba(0,0,0,0.3) transparent; /* Pour Firefox */
-      padding: 5px 15px 15px 5px; /* Plus d'espace en bas et à droite */
+      scrollbar-width: auto; /* Pour Firefox - 'auto' au lieu de 'thin' pour une barre plus large */
+      scrollbar-color: rgba(0,0,0,0.4) rgba(0,0,0,0.05); /* Pour Firefox - couleurs plus contrastées */
+      padding: 5px 15px 20px 5px; /* Plus d'espace en bas pour le défilement */
       flex-grow: 1;
       align-content: start; /* Empêche les éléments de s'étirer verticalement */
+      justify-content: space-between; /* Répartit l'espace horizontalement */
+      max-width: 100%;
     }
     
     /* Styliser les scrollbars pour Chrome/Safari/Edge */
     .thumbnail-grid::-webkit-scrollbar {
-      width: 8px;
+      width: 14px; /* Scrollbar plus large pour faciliter la saisie */
     }
     .thumbnail-grid::-webkit-scrollbar-track {
-      background: transparent;
+      background: rgba(0,0,0,0.05); /* Fond légèrement visible pour mieux voir la zone de défilement */
+      border-radius: 7px;
     }
     .thumbnail-grid::-webkit-scrollbar-thumb {
-      background-color: rgba(0,0,0,0.3);
-      border-radius: 4px;
+      background-color: rgba(0,0,0,0.4); /* Couleur plus foncée pour meilleure visibilité */
+      border-radius: 7px;
+      border: 2px solid white; /* Ajoute une bordure pour un look plus moderne */
+      min-height: 40px; /* Hauteur minimale pour faciliter la saisie */
+    }
+    .thumbnail-grid::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(0,0,0,0.6); /* Plus foncé au survol */
     }
     
     /* Styliser également les scrollbars pour la liste de numéros */
     .thumbnail-number-list::-webkit-scrollbar {
-      width: 8px;
+      width: 14px; /* Scrollbar plus large pour faciliter la saisie */
     }
     .thumbnail-number-list::-webkit-scrollbar-track {
-      background: transparent;
+      background: rgba(0,0,0,0.05); /* Fond légèrement visible */
+      border-radius: 7px;
     }
     .thumbnail-number-list::-webkit-scrollbar-thumb {
-      background-color: rgba(0,0,0,0.3);
-      border-radius: 4px;
+      background-color: rgba(0,0,0,0.4); /* Couleur plus foncée */
+      border-radius: 7px;
+      border: 2px solid white; /* Ajoute une bordure pour un look plus moderne */
+      min-height: 40px; /* Hauteur minimale pour faciliter la saisie */
+    }
+    .thumbnail-number-list::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(0,0,0,0.6); /* Plus foncé au survol */
     }
     .thumbnail-item {
       border: 1px solid #ddd; padding: 5px; cursor: pointer;
@@ -396,6 +417,10 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       position: relative; transition: transform 0.2s ease, box-shadow 0.2s ease;
       overflow: hidden;
+      /* Assurer une taille minimale et maximale pour éviter la superposition */
+      min-width: 100px;
+      max-width: 100%;
+      width: 100%;
     }
     .thumbnail-item:hover { transform: scale(1.05); border-color: #007aff; box-shadow: 0 0 8px rgba(0, 122, 255, 0.5); z-index: 5; }
     .thumbnail-item img { display: block; max-width: 100%; max-height: calc(100% - 20px); object-fit: contain; }
@@ -409,7 +434,7 @@
 <body>
 
   {# Main wrapper controlling presentation size and centering #}
-  <div class="swiper-container-wrapper" id="presentation-container">
+  <div class="swiper-container-wrapper" tabindex="0" id="presentation-container">
 
     {# Swiper initialization target #}
     <div class="swiper">
@@ -428,7 +453,8 @@
             <img class="slide-background-svg"
                  src="{{ slide.svg_path | e }}"
                  alt="Slide background {{ loop.index }}"
-                 loading="lazy">
+                 loading="lazy"
+                 onclick="document.querySelector('.swiper-container-wrapper').focus()">
           {% else %}
             <p class="error-message">
               SVG background missing<br>({{ slide.svg_path | e }})
