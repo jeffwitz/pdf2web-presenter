@@ -25,12 +25,17 @@
     }
     .thumbnail-number-list {
       width: 100%;
+      display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: flex-start;
       font-size: 1.2em;
       user-select: none;
+      max-height: 80vh; /* Limite la hauteur */
+      overflow-y: auto; /* Ajoute une barre de défilement verticale si nécessaire */
+      padding: 10px; /* Espace pour éviter que le contenu touche les bords */
+      box-sizing: border-box;
     }
     .thumbnail-number-item {
       display: flex;
@@ -328,9 +333,18 @@
     }
     .thumbnail-menu.visible { opacity: 1; visibility: visible; }
     .thumbnail-grid-container {
-      position: relative; background-color: #ffffff; padding: 40px 25px 25px 25px;
-      border-radius: 8px; width: 100%; height: 100%; max-width: 1200px; max-height: 90vh;
-      overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box;
+      position: relative; 
+      background-color: #ffffff; 
+      padding: 40px 25px 25px 25px;
+      border-radius: 8px; 
+      width: 100%; 
+      height: 100%; 
+      max-width: 1200px; 
+      max-height: 90vh;
+      display: flex; 
+      flex-direction: column; 
+      box-sizing: border-box;
+      /* Overflow est maintenant géré par .thumbnail-grid */
     }
     #close-thumbnail-menu {
       position: absolute; top: 8px; right: 12px; background: none; border: none;
@@ -339,8 +353,42 @@
     }
     #close-thumbnail-menu:hover { color: #333; }
     .thumbnail-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 15px; width: 100%; overflow-y: auto; padding-right: 5px; flex-grow: 1;
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 15px; 
+      width: 100%; 
+      height: calc(100% - 40px); /* Soustraire la hauteur du bouton de fermeture */
+      overflow-y: auto; /* Garantit le défilement vertical */
+      overflow-x: hidden; /* Évite le défilement horizontal */
+      scrollbar-width: thin; /* Pour Firefox */
+      scrollbar-color: rgba(0,0,0,0.3) transparent; /* Pour Firefox */
+      padding: 5px 15px 15px 5px; /* Plus d'espace en bas et à droite */
+      flex-grow: 1;
+      align-content: start; /* Empêche les éléments de s'étirer verticalement */
+    }
+    
+    /* Styliser les scrollbars pour Chrome/Safari/Edge */
+    .thumbnail-grid::-webkit-scrollbar {
+      width: 8px;
+    }
+    .thumbnail-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .thumbnail-grid::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
+    
+    /* Styliser également les scrollbars pour la liste de numéros */
+    .thumbnail-number-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    .thumbnail-number-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .thumbnail-number-list::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.3);
+      border-radius: 4px;
     }
     .thumbnail-item {
       border: 1px solid #ddd; padding: 5px; cursor: pointer;
