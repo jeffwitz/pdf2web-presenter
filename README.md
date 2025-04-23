@@ -91,15 +91,48 @@ python main.py [options] [path_to_pdf]
 
 An example presentation is included in the `example` directory. To try it out:
 
-### Convert the example presentation
+### 1. Generate the HTML Presentation from the Example PDF
+
+From the root of the repository, run:
+
 ```bash
 python main.py example/presentation.pdf
 ```
 
-### Open the generated presentation in your browser
+This will generate a new folder called `presentation/` at the root of your project, containing all the HTML, CSS, JS, and media assets for your interactive presentation.
+
+### 2. Open the Interactive Presentation
+
+You can open the generated presentation directly in your browser:
+
 ```bash
 firefox presentation/presentation_swiper.html  # or use your preferred browser
 ```
+
+### 3. Try the HTML Integration Example
+
+A ready-to-use HTML integration example is provided in [`example/integration_example.html`](example/integration_example.html). This page demonstrates how to embed your exported presentation into any website using an `<iframe>`.
+
+To view the integration example:
+
+```bash
+firefox example/integration_example.html
+```
+
+#### What does the integration example show?
+- **How to embed the generated presentation** into any web page using a simple `<iframe>`.
+- The iframe will display your interactive slides with navigation, videos, and all features enabled.
+- The layout is fully responsive: try resizing your browser window or viewing on mobile.
+
+#### How to use in your own website?
+You can copy the integration pattern from `example/integration_example.html` and adapt it for your own site. Simply ensure that the `presentation/` folder (containing `presentation_swiper.html` and all assets) is accessible to your web server, then use an iframe like:
+
+```html
+<iframe src="/presentation/presentation_swiper.html" style="width:100%;height:80vh;border:none;"></iframe>
+```
+
+For more advanced integration (custom navigation, multiple presentations, etc.), you can further adapt the example as needed.
+
 
 This will demonstrate the key features including:
 - Arrow keys for change of slides

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Integration Example – Embedded Presentation</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f6f7fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+    }
+    .container {
+      max-width: 950px;
+      width: 100%;
+      margin: 32px auto 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.10);
+      padding: 32px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 2.1em;
+      margin-bottom: 0.4em;
+      color: #193a5e;
+    }
+    p {
+      font-size: 1.15em;
+      color: #333;
+      margin-bottom: 2em;
+      max-width: 680px;
+      text-align: center;
+    }
+    .iframe-wrapper {
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      overflow: hidden;
+      background: #222;
+      /* Responsive aspect ratio hack */
+      padding-bottom: 56.25%; /* 16:9 ratio */
+      height: 0;
+      margin: 0 auto;
+      display: block;
+    }
+    .iframe-wrapper iframe {
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #222;
+      min-height: 200px;
+      max-height: 100vh;
+      display: block;
+    }
+    @media (max-width: 900px) {
+      .container, .iframe-wrapper { max-width: 100vw; }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 12px 2px; }
+      .iframe-wrapper { padding-bottom: 68%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Embedded Presentation Example</h1>
+    <p>
+      This page demonstrates how you can seamlessly embed a generated interactive presentation into any existing website using a simple <code>&lt;iframe&gt;</code> tag.<br>
+      The example below loads <code>presentation/presentation_swiper.html</code> directly. You can fully interact with the presentation (navigation, fullscreen, etc.) inside this frame.<br><br>
+      <strong>This showcases the power and flexibility of the HTML export approach for web integration.</strong>
+    </p>
+    <div class="iframe-wrapper">
+      <iframe src="../presentation/presentation_swiper.html" title="Embedded Presentation Example" allowfullscreen></iframe>
+    </div>
+  </div>
+</body>
+</html>
